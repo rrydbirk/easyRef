@@ -1,0 +1,14 @@
+TY  - COMP
+AU  - Rydbirk, Rasmus
+AU  - Kick, Fabienne
+AU  - Holze, Henrietta
+TI  - CRMetrics: Cell Ranger Output Filtering and Metrics Visualization
+PY  - 2024
+Y1  - 2024
+PB  - Comprehensive R Archive Network (CRAN)
+UR  - https://github.com/khodosevichlab/CRMetrics
+DO  - 10.32614/CRAN.package.CRMetrics
+M3  - Computer software
+N1  - R package version 0.3.2
+ER  - 
+

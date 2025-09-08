@@ -1,0 +1,5 @@
+# Export public API functions
+export(createRef)
+export(createRis)
+export(createBibtex)
+export(createBiocRef)

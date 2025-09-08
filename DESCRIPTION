@@ -1,0 +1,19 @@
+Package: easyRef
+Type: Package
+Title: Easy Reference Generation for R Packages
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Jane", "Doe",
+      email = "jane@example.com",
+      role = c("aut", "cre")
+    )
+  )
+Description: Generate citations and references for R packages from CRAN and Bioconductor.
+    Supports RIS and BibTeX formats with automatic DOI retrieval from GitHub repositories
+    and published papers. Includes command-line interface for batch processing.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Suggests: 
+    BiocManager
