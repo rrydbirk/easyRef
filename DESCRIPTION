@@ -7,7 +7,7 @@ Maintainer: Rasmus Rydbirk <rrydbirk@outlook.dk>
 Description: Generate citations and references for R packages from CRAN or Bioconductor.
     Supports RIS and BibTeX formats with automatic DOI retrieval from GitHub repositories
     and published papers. Includes command-line interface for batch processing.
-License: MIT + file LICENSE
+License: GPL-3
 Encoding: UTF-8
 URL: https://github.com/rrydbirk/easyRef
 BugReports: https://github.com/rrydbirk/easyRef/issues
