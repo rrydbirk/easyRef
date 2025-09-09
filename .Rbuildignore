@@ -12,3 +12,6 @@
 ^cursor$
 ^inst/shinyApp/README_app\.md$
 ^\.\.Rcheck$
+^LICENSE\.md$
+^CRAN-SUBMISSION$
+^cran-comments\.md$
