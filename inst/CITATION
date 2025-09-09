@@ -4,17 +4,17 @@ year <- sub(".*(2[0-9]{3})", "\\1", meta$Date, perl = TRUE)
 if (length(year) == 0 || is.na(year)) year <- format(Sys.Date(), "%Y")
 
 textVersion <- paste0(
-  "Jane Doe (", year, "). easyRef: Easy Reference Generation for R Packages. ",
+  "Rasmus Rydbirk (", year, "). easyRef: Easy Reference Generation for R Packages. ",
   "R package version ", meta$Version, ". ",
-  "https://github.com/your-username/easyRef"
+  "https://github.com/rrydbirk/easyRef"
 )
 
 bibentry(
   bibtype = "Manual",
   title = "easyRef: Easy Reference Generation for R Packages",
-  author = person("Jane", "Doe"),
-  year = year,
+  author = person("Rasmus", "Rydbirk"),
+  year = 2025,
   note = paste0("R package version ", meta$Version),
-  url = "https://github.com/your-username/easyRef",
+  url = "https://github.com/rrydbirk/easyRef",
   textVersion = textVersion
 )
