@@ -2,18 +2,21 @@ Package: easyRef
 Type: Package
 Title: Easy Reference Generation for R Packages
 Version: 0.1.0
-Authors@R: c(
-    person(
-      "Jane", "Doe",
-      email = "jane@example.com",
-      role = c("aut", "cre")
-    )
-  )
-Description: Generate citations and references for R packages from CRAN and Bioconductor.
+Author: Rasmus Rydbirk [aut, cre]
+Maintainer: Rasmus Rydbirk <rrydbirk@outlook.dk>
+Description: Generate citations and references for R packages from CRAN or Bioconductor.
     Supports RIS and BibTeX formats with automatic DOI retrieval from GitHub repositories
     and published papers. Includes command-line interface for batch processing.
-License: MIT
+License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+URL: https://github.com/rrydbirk/easyRef
+BugReports: https://github.com/rrydbirk/easyRef/issues
+Depends: 
+    R (>= 3.5.0)
+Imports: 
+    utils
 Suggests: 
-    BiocManager
+    BiocManager,
+    stringr,
+    testthat (>= 3.0.0)
+RoxygenNote: 7.3.2

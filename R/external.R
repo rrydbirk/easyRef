@@ -20,11 +20,13 @@
 #' # Generate RIS citation for a CRAN package
 #' result <- createRef("ggplot2")
 #'
-#' # Generate citation for a Bioconductor package
-#' result <- createRef("Biobase")
+#' # Generate citation for a Bioconductor package (requires BiocManager)
+#' if (requireNamespace("BiocManager", quietly = TRUE)) {
+#'   result <- createRef("Biobase")
+#' }
 #'
 #' # Generate both RIS and BibTeX for multiple packages
-#' results <- createRef(c("ggplot2", "dplyr", "Biobase"), format = "both")
+#' results <- createRef(c("ggplot2", "dplyr"), format = "both")
 #'
 #' # Write to file (extension will be added automatically)
 #' createRef("ggplot2", filename = "ggplot2_citation")
@@ -34,11 +36,6 @@
 #'
 #' # Force search in specific repository
 #' createRef("ggplot2", database = "cran")
-#' createRef("Biobase", database = "bioconductor")
-#'
-#' # Generate citations for popular Bioconductor packages
-#' bioc_packages <- c("Biobase", "limma", "edgeR", "DESeq2")
-#' results <- createRef(bioc_packages, format = "both")
 #' }
 createRef <- function(pkg, format = "ris", filename = NULL, overwrite = TRUE, verbose = FALSE, database = "auto") {
   # Normalize database parameter
@@ -330,21 +327,23 @@ createBibtex <- function(key, title, authors, year, url = NULL, version = NULL, 
 #' @export
 #' @examples
 #' \dontrun{
-#' # Generate citation for Bioconductor packages
-#' result <- createBiocRef("Biobase")
-#' 
-#' # Generate citations for multiple Bioconductor packages
-#' bioc_packages <- c("Biobase", "limma", "edgeR", "DESeq2")
-#' results <- createBiocRef(bioc_packages, format = "both")
-#' 
-#' # Write Bioconductor package citations to file (extension added automatically)
-#' createBiocRef("Biobase", filename = "biobase_citation")
-#' 
-#' # Verbose output for Bioconductor packages (writes to default file)
-#' createBiocRef("Biobase", verbose = TRUE)
-#' 
-#' # Force search in Bioconductor repository
-#' createBiocRef("Biobase", database = "bioconductor", verbose = TRUE)
+#' # Generate citation for Bioconductor packages (requires BiocManager)
+#' if (requireNamespace("BiocManager", quietly = TRUE)) {
+#'   result <- createBiocRef("Biobase")
+#'   
+#'   # Generate citations for multiple Bioconductor packages
+#'   bioc_packages <- c("Biobase", "limma", "edgeR")
+#'   results <- createBiocRef(bioc_packages, format = "both")
+#'   
+#'   # Write Bioconductor package citations to file (extension added automatically)
+#'   createBiocRef("Biobase", filename = "biobase_citation")
+#'   
+#'   # Verbose output for Bioconductor packages (writes to default file)
+#'   createBiocRef("Biobase", verbose = TRUE)
+#'   
+#'   # Force search in Bioconductor repository
+#'   createBiocRef("Biobase", database = "bioconductor", verbose = TRUE)
+#' }
 #' }
 
 

@@ -3,3 +3,6 @@ export(createRef)
 export(createRis)
 export(createBibtex)
 export(createBiocRef)
+
+# Import required functions
+importFrom(utils, toBibtex)

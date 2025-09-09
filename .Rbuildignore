@@ -1,2 +1,14 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.Rhistory$
+^\.RData$
+^\.Ruserdata$
+^README\.md$
+^NEWS\.md$
+^\.git$
+^\.gitignore$
+^\.travis\.yml$
+^\.github$
+^cursor$
+^inst/shinyApp/README_app\.md$
+^\.\.Rcheck$

@@ -1,0 +1,20 @@
+citHeader("To cite easyRef in publications use:")
+
+year <- sub(".*(2[0-9]{3})", "\\1", meta$Date, perl = TRUE)
+if (length(year) == 0 || is.na(year)) year <- format(Sys.Date(), "%Y")
+
+textVersion <- paste0(
+  "Jane Doe (", year, "). easyRef: Easy Reference Generation for R Packages. ",
+  "R package version ", meta$Version, ". ",
+  "https://github.com/your-username/easyRef"
+)
+
+bibentry(
+  bibtype = "Manual",
+  title = "easyRef: Easy Reference Generation for R Packages",
+  author = person("Jane", "Doe"),
+  year = year,
+  note = paste0("R package version ", meta$Version),
+  url = "https://github.com/your-username/easyRef",
+  textVersion = textVersion
+)

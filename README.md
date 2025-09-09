@@ -16,7 +16,7 @@
 ```r
 # Install from source (development version)
 install.packages("devtools")
-devtools::install_github("your-username/easyRef")
+devtools::install_github("rrydbirk/easyRef")
 
 # Or install locally
 install.packages(".", repos = NULL, type = "source")
