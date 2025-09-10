@@ -18,7 +18,7 @@
 #' @examples
 #' \dontrun{
 #' # Generate RIS citation for a CRAN package
-#' result <- createRef("ggplot2")
+#' result <- createRef("ggplot2", filename = tempfile()) # Omit filename
 #'
 #' # Generate citation for a Bioconductor package (requires BiocManager)
 #' if (requireNamespace("BiocManager", quietly = TRUE)) {
@@ -29,13 +29,13 @@
 #' results <- createRef(c("ggplot2", "dplyr"), format = "both")
 #'
 #' # Write to file (extension will be added automatically)
-#' createRef("ggplot2", filename = "ggplot2_citation")
+#' createRef("ggplot2", filename = tempfile()) # Replace with e.g. "ggplot2_citation"
 #'
 #' # Verbose output showing each step (writes to default file)
-#' createRef("ggplot2", verbose = TRUE)
+#' createRef("ggplot2", verbose = TRUE, filename = tempfile()) # Omit filename
 #'
 #' # Force search in specific repository
-#' createRef("ggplot2", database = "cran")
+#' createRef("ggplot2", database = "cran", filename = tempfile()) # Omit filename
 #' }
 createRef <- function(pkg, format = "ris", filename = NULL, overwrite = TRUE, verbose = FALSE, database = "auto") {
   # Normalize database parameter
@@ -205,7 +205,8 @@ createRef <- function(pkg, format = "ris", filename = NULL, overwrite = TRUE, ve
 #'   title = "ggplot2: Create Elegant Data Visualisations",
 #'   authors = c("Wickham, Hadley"),
 #'   year = "2016",
-#'   url = "https://ggplot2.tidyverse.org"
+#'   url = "https://ggplot2.tidyverse.org",
+#'   filename = tempfile() # Omit filename
 #' )
 #'
 #' # Write to file
@@ -213,7 +214,7 @@ createRef <- function(pkg, format = "ris", filename = NULL, overwrite = TRUE, ve
 #'   title = "ggplot2: Create Elegant Data Visualisations",
 #'   authors = c("Wickham, Hadley"),
 #'   year = "2016",
-#'   filename = "ggplot2.ris"
+#'   filename = tempfile() # Replace with e.g. "ggplot2.ris"
 #' )
 createRis <- function(title, authors, year, url = NULL, version = NULL, doi = NULL, notes = NULL, publisher = "Comprehensive R Archive Network (CRAN)", filename = NULL, overwrite = TRUE) {
   lines <- c()
@@ -278,6 +279,7 @@ createRis <- function(title, authors, year, url = NULL, version = NULL, doi = NU
 #'   authors = c("Wickham, Hadley"),
 #'   year = "2016",
 #'   url = "https://ggplot2.tidyverse.org"
+#'   filename = tempfile() # Omit filename
 #' )
 #'
 #' # Write to file
@@ -286,7 +288,7 @@ createRis <- function(title, authors, year, url = NULL, version = NULL, doi = NU
 #'   title = "ggplot2: Create Elegant Data Visualisations",
 #'   authors = c("Wickham, Hadley"),
 #'   year = "2016",
-#'   filename = "ggplot2.bib"
+#'   filename = tempfile() # Replace with e.g. "ggplot2.bib"
 #' )
 createBibtex <- function(key, title, authors, year, url = NULL, version = NULL, filename = NULL, overwrite = TRUE) {
   # Minimal @software entry; many BibTeX styles accept @misc
@@ -321,7 +323,7 @@ createBibtex <- function(key, title, authors, year, url = NULL, version = NULL, 
 #'   If no file extension is provided, one will be added based on the format.
 #' @param overwrite Allow overwriting existing files (default: TRUE)
 #' @param verbose Logical. If TRUE, prints detailed information about each step (default: FALSE)
-#' @param database Repository to search: "auto" (default), "cran", or "bioconductor". 
+#' @param database Repository to search: "auto" (default), "cran", or "bioconductor".
 #'   For Bioconductor packages, "bioconductor" is recommended.
 #' @return Invisible list of results with package information and formatted citations. Always writes to file.
 #' @export
@@ -330,35 +332,33 @@ createBibtex <- function(key, title, authors, year, url = NULL, version = NULL, 
 #' # Generate citation for Bioconductor packages (requires BiocManager)
 #' if (requireNamespace("BiocManager", quietly = TRUE)) {
 #'   result <- createBiocRef("Biobase")
-#'   
+#'
 #'   # Generate citations for multiple Bioconductor packages
 #'   bioc_packages <- c("Biobase", "limma", "edgeR")
-#'   results <- createBiocRef(bioc_packages, format = "both")
-#'   
+#'   results <- createBiocRef(bioc_packages, format = "both", filename = tempfile()) # Omit filename
+#'
 #'   # Write Bioconductor package citations to file (extension added automatically)
-#'   createBiocRef("Biobase", filename = "biobase_citation")
-#'   
+#'   createBiocRef("Biobase", filename = tempfile()) # Replace with e.g. "biobase_citation"
+#'
 #'   # Verbose output for Bioconductor packages (writes to default file)
-#'   createBiocRef("Biobase", verbose = TRUE)
-#'   
+#'   createBiocRef("Biobase", verbose = TRUE, filename = tempfile()) # Omit filename = tempfile()
+#'
 #'   # Force search in Bioconductor repository
-#'   createBiocRef("Biobase", database = "bioconductor", verbose = TRUE)
+#'   createBiocRef("Biobase", database = "bioconductor", verbose = TRUE, filename = tempfile()) # Omit filename = tempfile()
 #' }
 #' }
-
-
 createBiocRef <- function(pkg, format = "ris", filename = NULL, overwrite = TRUE, verbose = FALSE, database = "auto") {
   # Normalize and validate format parameter
   format <- tolower(format)
   if (!format %in% c("ris", "bibtex", "bib", "both")) {
     stop("format parameter must be 'ris', 'bib', 'bibtex', or 'both'")
   }
-  
+
   # Convert "bib" to "bibtex" for internal processing
   if (format == "bib") {
     format <- "bibtex"
   }
-  
+
   # Check if BiocManager is available
   if (!is_installed("BiocManager")) {
     warning("BiocManager not available. Install with: install.packages('BiocManager')")
