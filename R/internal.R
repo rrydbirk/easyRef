@@ -188,6 +188,111 @@ ris_sanitize <- function(x) {
   trimws(x)
 }
 
+#' Get author information from CRAN package website
+#' @param pkg Package name
+#' @return Character string with author information or NULL if not available
+get_cran_author_from_web <- function(pkg) {
+  # Construct the CRAN package URL
+  cran_url <- paste0("https://cran.r-project.org/web/packages/", pkg, "/index.html")
+  
+  # Try to scrape the webpage
+  tryCatch({
+    # Read the HTML page
+    page <- xml2::read_html(cran_url)
+    
+    # Look for the Author field in the table
+    # Find all table rows and look for one containing "Author:"
+    tables <- rvest::html_nodes(page, 'table')
+    author_text <- NULL
+    
+    for (table in tables) {
+      rows <- rvest::html_nodes(table, 'tr')
+      for (row in rows) {
+        row_text <- rvest::html_text(row)
+        if (grepl('Author:', row_text)) {
+          # Extract the author information from this row
+          # Remove "Author:" from the beginning
+          author_text <- gsub('^Author:\\s*', '', row_text)
+          break
+        }
+      }
+      if (!is.null(author_text)) break
+    }
+    
+    if (!is.null(author_text) && nchar(author_text) > 0) {
+      # Clean up the author text by removing role information and extra whitespace
+      # Remove role information in brackets [aut], [cre], [ctb], etc.
+      clean_author_text <- gsub("\\s*\\[[^]]*\\]\\s*", "", author_text)
+      
+      # Remove extra whitespace and newlines
+      clean_author_text <- gsub("\\s+", " ", clean_author_text)
+      clean_author_text <- trimws(clean_author_text)
+      
+      # Split by comma and clean up each part
+      author_parts <- strsplit(clean_author_text, ",")[[1]]
+      clean_authors <- character(0)
+      
+      for (part in author_parts) {
+        clean_part <- trimws(part)
+        # Remove any remaining role information or parenthetical content
+        clean_part <- gsub("\\s*\\([^)]*\\)\\s*", "", clean_part)
+        clean_part <- trimws(clean_part)
+        if (nzchar(clean_part)) {
+          clean_authors <- c(clean_authors, clean_part)
+        }
+      }
+      
+      # Join authors with commas
+      if (length(clean_authors) > 0) {
+        return(paste(clean_authors, collapse = ", "))
+      }
+    }
+    
+    return(NULL)
+  }, error = function(e) {
+    # If web scraping fails, return NULL
+    return(NULL)
+  })
+}
+
+#' Get title information from CRAN package website
+#' @param pkg Package name
+#' @return Character string with title information or NULL if not available
+get_cran_title_from_web <- function(pkg) {
+  # Construct the CRAN package URL
+  cran_url <- paste0("https://cran.r-project.org/web/packages/", pkg, "/index.html")
+  
+  # Try to scrape the webpage
+  tryCatch({
+    # Read the HTML page
+    page <- xml2::read_html(cran_url)
+    
+    # First try the og:title meta tag using html_attr
+    og_title_node <- rvest::html_node(page, 'meta[property="og:title"]')
+    if (!is.na(og_title_node)) {
+      title <- rvest::html_attr(og_title_node, "content")
+      if (!is.na(title) && nchar(title) > 0) {
+        return(trimws(title))
+      }
+    }
+    
+    # Fallback: try to extract from h2 heading
+    h2_node <- rvest::html_node(page, "h2")
+    if (!is.na(h2_node)) {
+      h2_text <- rvest::html_text(h2_node)
+      # Check if it starts with the package name
+      if (grepl(paste0("^", pkg, ":"), h2_text)) {
+        return(trimws(h2_text))
+      }
+    }
+    
+    return(NULL)
+  }, error = function(e) {
+    # If web scraping fails, return NULL
+    return(NULL)
+  })
+}
+
 #' Get CRAN metadata for a package without installing it
 #' @param pkg Package name
 #' @return List with package metadata or NULL if not found
@@ -200,14 +305,18 @@ cran_meta_for <- function(pkg) {
 
   ap <- tryCatch(utils::available.packages(repos = repos), error = function(e) NULL)
   if (is.null(ap) || nrow(ap) == 0 || !(pkg %in% rownames(ap))) return(NULL)
-
+  
+  # Get title and author information from CRAN package website
+  title_info <- get_cran_title_from_web(pkg)
+  author_info <- get_cran_author_from_web(pkg)
+  
   # Safely extract package information (only basic info available from available.packages)
   tryCatch({
     list(
-      Title    = pkg,  # Use package name as title since Title not available
+      Title    = if (!is.null(title_info)) title_info else pkg,  # Use scraped title or package name as fallback
       Version  = ap[pkg, "Version"],
       URL      = NULL,  # Not available from available.packages
-      Author   = NULL,  # Not available from available.packages
+      Author   = author_info,  # Author information scraped from web
       Maintainer = NULL  # Not available from available.packages
     )
   }, error = function(e) NULL)
