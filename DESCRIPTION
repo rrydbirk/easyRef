@@ -3,6 +3,7 @@ Type: Package
 Title: Easy Reference Generation for R Packages
 Version: 0.1.0
 Author: Rasmus Rydbirk [aut, cre]
+Authors@R: person(given = "Rasmus", family = "Rydbirk", role = c("aut", "cre"), email = "rrydbirk@outlook.dk")
 Maintainer: Rasmus Rydbirk <rrydbirk@outlook.dk>
 Description: Generate citations and references for R packages from CRAN or Bioconductor.
     Supports RIS and BibTeX formats with automatic DOI retrieval from GitHub repositories
