@@ -46,7 +46,7 @@ if (requireNamespace("BiocManager", quietly = TRUE)) {
   results <- createBiocRef(bioc_packages, format = "both")
   
   # Write Bioconductor package citations to file (extension added automatically)
-  createBiocRef("Biobase", filename = "biobase_citation")
+  createBiocRef("Biobase", filename = tempfile())
   
   # Verbose output for Bioconductor packages (writes to default file)
   createBiocRef("Biobase", verbose = TRUE)

@@ -57,6 +57,6 @@ createRis(
   title = "ggplot2: Create Elegant Data Visualisations",
   authors = c("Wickham, Hadley"),
   year = "2016",
-  filename = "ggplot2.ris"
+  filename = tempfile()
 )
 }

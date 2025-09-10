@@ -51,7 +51,7 @@ if (requireNamespace("BiocManager", quietly = TRUE)) {
 results <- createRef(c("ggplot2", "dplyr"), format = "both")
 
 # Write to file (extension will be added automatically)
-createRef("ggplot2", filename = "ggplot2_citation")
+createRef("ggplot2", filename = tempfile())
 
 # Verbose output showing each step (writes to default file)
 createRef("ggplot2", verbose = TRUE)

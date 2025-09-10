@@ -26,7 +26,7 @@
 #' }
 #'
 #' # Generate both RIS and BibTeX for multiple packages
-#' results <- createRef(c("ggplot2", "dplyr"), format = "both")
+#' results <- createRef(c("ggplot2", "dplyr"), format = "both", filename = tempfile())
 #'
 #' # Write to file (extension will be added automatically)
 #' createRef("ggplot2", filename = tempfile()) # Replace with e.g. "ggplot2_citation"
