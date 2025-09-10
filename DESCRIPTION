@@ -14,7 +14,9 @@ BugReports: https://github.com/rrydbirk/easyRef/issues
 Depends: 
     R (>= 3.5.0)
 Imports: 
-    utils
+    utils,
+    xml2,
+    rvest
 Suggests: 
     BiocManager,
     stringr,

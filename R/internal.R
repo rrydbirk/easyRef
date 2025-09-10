@@ -29,7 +29,7 @@ is_installed <- function(pkg) {
 #' @return Character string with formatted name
 person_to_string <- function(p) {
   if (is.null(p)) return("")
-  
+
   # Handle case where p is a list of person objects
   if (is.list(p) && length(p) > 0 && is.list(p[[1]])) {
     # Multiple person objects
@@ -39,11 +39,11 @@ person_to_string <- function(p) {
     }
     return(paste(names, collapse = "; "))
   }
-  
+
   # Single person object
   given <- if (!is.null(p$given)) paste(p$given, collapse = " ") else ""
   family <- if (!is.null(p$family)) paste(p$family, collapse = " ") else ""
-  
+
   if (nchar(family) > 0 && nchar(given) > 0) {
     name <- paste(family, given, sep = ", ")
   } else if (nchar(family) > 0) {
@@ -56,7 +56,7 @@ person_to_string <- function(p) {
     fallback <- fallback[!is.null(fallback) & nzchar(fallback)]
     name <- if (length(fallback) > 0) paste(fallback, collapse = " ") else ""
   }
-  
+
   # Clean any bracketed content from the name
   name <- clean_author_name(name)
   trimws(name)
@@ -67,7 +67,7 @@ person_to_string <- function(p) {
 #' @return Character vector of author names
 authors_from_bibentry <- function(be) {
   if (is.null(be)) return(character(0))
-  
+
   # Try to extract author information from the deeply nested structure
   tryCatch({
     # Navigate through the nested structure: be -> [[1]] -> [[1]] -> author
@@ -78,20 +78,20 @@ authors_from_bibentry <- function(be) {
         all_authors <- character(0)
         for (i in seq_along(author_field)) {
           person_obj <- author_field[[i]]
-          
+
           # Handle the nested structure: person_obj -> [[1]] -> given/family
           if (length(person_obj) > 0 && is.list(person_obj[[1]])) {
             person_data <- person_obj[[1]]
-            
+
             # Extract given and family names
             given <- if (!is.null(person_data$given)) person_data$given else ""
             family <- if (!is.null(person_data$family)) person_data$family else ""
-            
+
             # Handle multiple given names (join with space)
             if (is.vector(given) && length(given) > 1) {
               given <- paste(given, collapse = " ")
             }
-            
+
             # Format the name
             if (nchar(family) > 0 && nchar(given) > 0) {
               name <- paste(family, given, sep = ", ")
@@ -103,7 +103,7 @@ authors_from_bibentry <- function(be) {
               # Skip this author if no name found
               next
             }
-            
+
             # Clean any bracketed content
             name <- clean_author_name(name)
             all_authors <- c(all_authors, trimws(name))
@@ -139,7 +139,7 @@ authors_from_bibentry <- function(be) {
 #' @return Character string with year
 year_from_bibentry <- function(be) {
   if (is.null(be)) return(as.character(format(Sys.Date(), "%Y")))
-  
+
   y <- tryCatch({
     # Try direct access first (works even when names() is NULL)
     be$year
@@ -153,7 +153,7 @@ year_from_bibentry <- function(be) {
       }
     }, error = function(e2) NULL)
   })
-  
+
   if (is.null(y)) {
     d <- tryCatch({
       # Try direct access first
@@ -168,12 +168,12 @@ year_from_bibentry <- function(be) {
         }
       }, error = function(e2) NULL)
     })
-    
+
     if (!is.null(d) && nzchar(d)) {
       y <- substr(as.character(d), 1, 4)
     }
   }
-  
+
   if (is.null(y)) {
     y <- as.character(format(Sys.Date(), "%Y"))
   }
@@ -197,10 +197,10 @@ cran_meta_for <- function(pkg) {
   if (length(repos) == 0 || isTRUE(is.na(repos)) || repos == "@CRAN@") {
     repos <- c(CRAN = "https://cloud.r-project.org")
   }
-  
+
   ap <- tryCatch(utils::available.packages(repos = repos), error = function(e) NULL)
   if (is.null(ap) || nrow(ap) == 0 || !(pkg %in% rownames(ap))) return(NULL)
-  
+
   # Safely extract package information (only basic info available from available.packages)
   tryCatch({
     list(
@@ -213,6 +213,58 @@ cran_meta_for <- function(pkg) {
   }, error = function(e) NULL)
 }
 
+#' Get author information from BioC package website
+#' @param pkg Package name
+#' @return Character string with author information or NULL if not available
+get_bioc_author_from_web <- function(pkg) {
+  # Construct the BioC package URL
+  bioc_url <- paste0("https://www.bioconductor.org/packages/release/bioc/html/", pkg, ".html")
+
+  # Try to scrape the webpage
+  tryCatch({
+    # Read the HTML page
+    page <- xml2::read_html(bioc_url)
+
+    # Look for the Author field in the HTML
+    # Pattern: <strong>Author:</strong> Author names with roles
+    author_text <- rvest::html_text(page)
+
+    # Extract author information using regex pattern
+    # Look for pattern: "Author:" followed by author names
+    author_pattern <- "Author:\\s*([^\\n]+)"
+    author_match <- regmatches(author_text, regexec(author_pattern, author_text, perl = TRUE))
+
+    if (length(author_match) > 0 && length(author_match[[1]]) > 1) {
+      authors_with_roles <- trimws(author_match[[1]][2])
+
+      # Clean up the author names by removing role information [cre, aut], [aut], etc.
+      # Remove all role information in brackets first
+      clean_authors_text <- gsub("\\s*\\[[^]]*\\]\\s*", "", authors_with_roles)
+
+      # Split by comma and clean up each part
+      author_parts <- strsplit(clean_authors_text, ",")[[1]]
+      clean_authors <- character(0)
+
+      for (part in author_parts) {
+        clean_part <- trimws(part)
+        if (nzchar(clean_part)) {
+          clean_authors <- c(clean_authors, clean_part)
+        }
+      }
+
+      # Join authors with commas
+      if (length(clean_authors) > 0) {
+        return(paste(clean_authors, collapse = ", "))
+      }
+    }
+
+    return(NULL)
+  }, error = function(e) {
+    # If web scraping fails, return NULL
+    return(NULL)
+  })
+}
+
 #' Get Bioconductor metadata for a package without installing it
 #' @param pkg Package name
 #' @return List with package metadata or NULL if not found
@@ -221,25 +273,28 @@ bioc_meta_for <- function(pkg) {
   if (!is_installed("BiocManager")) {
     return(NULL)
   }
-  
+
   # Get Bioconductor repositories
   bioc_repos <- tryCatch({
     BiocManager::repositories()
   }, error = function(e) NULL)
-  
+
   if (is.null(bioc_repos)) return(NULL)
-  
+
   # Try to get package info from Bioconductor
   ap <- tryCatch(utils::available.packages(repos = bioc_repos), error = function(e) NULL)
   if (is.null(ap) || nrow(ap) == 0 || !(pkg %in% rownames(ap))) return(NULL)
-  
+
+  # Get author information from BioC package website
+  author_info <- get_bioc_author_from_web(pkg)
+
   # Safely extract package information (only basic info available from available.packages)
   tryCatch({
     list(
       Title    = pkg,  # Use package name as title since Title not available
       Version  = ap[pkg, "Version"],
       URL      = paste0("https://bioconductor.org/packages/", pkg),  # Bioconductor package URL
-      Author   = NULL,  # Not available from available.packages
+      Author   = author_info,  # Author information scraped from web
       Maintainer = NULL,  # Not available from available.packages
       Repository = "Bioconductor"
     )
@@ -255,23 +310,23 @@ package_exists_on_repos <- function(pkg) {
   if (length(repos) == 0 || isTRUE(is.na(repos)) || repos == "@CRAN@") {
     repos <- c(CRAN = "https://cloud.r-project.org")
   }
-  
+
   # Check CRAN
   ap <- tryCatch(utils::available.packages(repos = repos), error = function(e) NULL)
   if (!is.null(ap) && nrow(ap) > 0 && pkg %in% rownames(ap)) {
     return(TRUE)
   }
-  
+
   # Check Bioconductor if available
   if (is_installed("BiocManager")) {
     bioc_repos <- tryCatch({
       BiocManager::repositories()
     }, error = function(e) NULL)
-    
+
     if (!is.null(bioc_repos)) {
       # Check only Bioconductor-specific repositories (exclude CRAN)
       bioc_only_repos <- bioc_repos[!names(bioc_repos) %in% c("CRAN", "CRANextra")]
-      
+
       if (length(bioc_only_repos) > 0) {
         ap_bioc <- tryCatch(utils::available.packages(repos = bioc_only_repos), error = function(e) NULL)
         if (!is.null(ap_bioc) && nrow(ap_bioc) > 0 && pkg %in% rownames(ap_bioc)) {
@@ -280,7 +335,7 @@ package_exists_on_repos <- function(pkg) {
       }
     }
   }
-  
+
   return(FALSE)
 }
 
@@ -289,21 +344,21 @@ package_exists_on_repos <- function(pkg) {
 #' @return Logical indicating if package is from Bioconductor
 is_bioc_package <- function(pkg) {
   if (!is_installed("BiocManager")) return(FALSE)
-  
+
   bioc_repos <- tryCatch({
     BiocManager::repositories()
   }, error = function(e) NULL)
-  
+
   if (is.null(bioc_repos)) return(FALSE)
-  
+
   # Check only Bioconductor-specific repositories (exclude CRAN)
   bioc_only_repos <- bioc_repos[!names(bioc_repos) %in% c("CRAN", "CRANextra")]
-  
+
   if (length(bioc_only_repos) == 0) return(FALSE)
-  
+
   ap <- tryCatch(utils::available.packages(repos = bioc_only_repos), error = function(e) NULL)
   if (is.null(ap)) return(FALSE)
-  
+
   pkg %in% rownames(ap)
 }
 
@@ -313,7 +368,7 @@ is_bioc_package <- function(pkg) {
 #' @return List with GitHub info and DOI or NULL if not found
 get_github_info <- function(pkg, url = NULL) {
   github_info <- list(repo = NULL, doi = NULL, github_url = NULL)
-  
+
   # Try to extract GitHub URL from package URL
   if (!is.null(url) && nzchar(url)) {
     urls <- strsplit(url, "[ ,]")[[1]]
@@ -329,7 +384,7 @@ get_github_info <- function(pkg, url = NULL) {
       }
     }
   }
-  
+
   # If no GitHub URL found, try common patterns
   if (is.null(github_info$repo)) {
     # Try to find GitHub URL from package description or citation
@@ -347,12 +402,12 @@ get_github_info <- function(pkg, url = NULL) {
       }
     }
   }
-  
+
   # Try to get DOI from GitHub repository
   if (!is.null(github_info$repo)) {
     github_info$doi <- get_doi_from_github(github_info$repo)
   }
-  
+
   github_info
 }
 
@@ -361,33 +416,33 @@ get_github_info <- function(pkg, url = NULL) {
 #' @return DOI string or NULL if not found
 extract_doi_from_reference_sections <- function(readme_content) {
   if (is.null(readme_content) || length(readme_content) == 0) return(NULL)
-  
+
   # Look for reference/citation section headers
   ref_section_patterns <- c(
     "^#+\\s*references?\\s*$",
-    "^#+\\s*citation[s]?\\s*$", 
+    "^#+\\s*citation[s]?\\s*$",
     "^#+\\s*citing\\s*$",
     "^references?\\s*$",
     "^citation[s]?\\s*$",
     "^citing\\s*$"
   )
-  
+
   # Find reference sections
   ref_section_indices <- integer(0)
   for (pattern in ref_section_patterns) {
     matches <- grep(pattern, readme_content, ignore.case = TRUE)
     ref_section_indices <- c(ref_section_indices, matches)
   }
-  
+
   if (length(ref_section_indices) == 0) return(NULL)
-  
+
   # Extract content from reference sections (next 20 lines after each section header)
   ref_content <- character(0)
   for (idx in ref_section_indices) {
     end_idx <- min(idx + 20, length(readme_content))
     ref_content <- c(ref_content, readme_content[idx:end_idx])
   }
-  
+
   # Look for DOI patterns in reference sections - simplified and robust patterns
   doi_patterns <- c(
     "doi\\.org/([0-9]+\\.[0-9]+/[^\\s]+)",
@@ -398,10 +453,10 @@ extract_doi_from_reference_sections <- function(readme_content) {
     "\\bdoi\\s*[:=]\\s*([0-9]+\\.[0-9]+/[^\\s]+)",
     "\\bDOI\\s*[:=]\\s*([0-9]+\\.[0-9]+/[^\\s]+)"
   )
-  
+
   # Collect DOIs from reference sections using multiple approaches
   ref_dois <- character(0)
-  
+
   # Try stringr approach if available
   if (requireNamespace("stringr", quietly = TRUE)) {
     for (line in ref_content) {
@@ -415,7 +470,7 @@ extract_doi_from_reference_sections <- function(readme_content) {
         }
         ref_dois <- c(ref_dois, doi)
       }
-      
+
       # Also try https://doi.org patterns
       doi_match2 <- stringr::str_extract(line, "https://doi\\.org/([0-9]+\\.[0-9]+/[^\\s]+)")
       if (!is.na(doi_match2)) {
@@ -428,7 +483,7 @@ extract_doi_from_reference_sections <- function(readme_content) {
       }
     }
   }
-  
+
   # Fallback to base R approach
   if (length(ref_dois) == 0) {
     for (pattern in doi_patterns) {
@@ -446,12 +501,12 @@ extract_doi_from_reference_sections <- function(readme_content) {
       }
     }
   }
-  
+
   # Return the first DOI found in reference sections
   if (length(ref_dois) > 0) {
     return(ref_dois[1])
   }
-  
+
   NULL
 }
 
@@ -461,13 +516,13 @@ extract_doi_from_reference_sections <- function(readme_content) {
 get_doi_from_github <- function(repo) {
   # Try to get DOI from GitHub repository using web scraping
   # This is a basic implementation that looks for DOI patterns in README
-  
+
   if (is.null(repo) || !nzchar(repo)) return(NULL)
-  
+
   # Try to fetch README content from GitHub
   readme_url <- paste0("https://raw.githubusercontent.com/", repo, "/main/README.md")
   readme_alt_url <- paste0("https://raw.githubusercontent.com/", repo, "/master/README.md")
-  
+
   # Try main branch first, then master (suppress warnings for missing files)
   readme_content <- tryCatch({
     suppressWarnings(readLines(readme_url, warn = FALSE))
@@ -476,14 +531,14 @@ get_doi_from_github <- function(repo) {
       suppressWarnings(readLines(readme_alt_url, warn = FALSE))
     }, error = function(e2) NULL)
   })
-  
+
   if (!is.null(readme_content)) {
     # First, try to find References/Citation sections and prioritize them
     reference_sections <- extract_doi_from_reference_sections(readme_content)
     if (!is.null(reference_sections)) {
       return(reference_sections)
     }
-    
+
     # Fallback to general DOI patterns throughout the document
     doi_patterns <- c(
       # Standard DOI patterns
@@ -496,10 +551,10 @@ get_doi_from_github <- function(repo) {
       "\\bdoi\\s*[:=]\\s*([0-9]+\\.[0-9]+/[^\\s]+)",
       "\\bDOI\\s*[:=]\\s*([0-9]+\\.[0-9]+/[^\\s]+)"
     )
-    
+
     # Collect all DOIs found using multiple approaches
     all_dois <- character(0)
-    
+
     # Try stringr approach if available
     if (requireNamespace("stringr", quietly = TRUE)) {
       for (line in readme_content) {
@@ -513,7 +568,7 @@ get_doi_from_github <- function(repo) {
           }
           all_dois <- c(all_dois, doi)
         }
-        
+
         # Also try https://doi.org patterns
         doi_match2 <- stringr::str_extract(line, "https://doi\\.org/([0-9]+\\.[0-9]+/[^\\s]+)")
         if (!is.na(doi_match2)) {
@@ -526,7 +581,7 @@ get_doi_from_github <- function(repo) {
         }
       }
     }
-    
+
     # Fallback to base R approach
     if (length(all_dois) == 0) {
       for (pattern in doi_patterns) {
@@ -545,17 +600,17 @@ get_doi_from_github <- function(repo) {
         }
       }
     }
-    
+
     # Return the most relevant DOI (first one found, or prioritize certain patterns)
     if (length(all_dois) > 0) {
       return(all_dois[1])
     }
   }
-  
+
   # Try to get DOI from CITATION file (suppress warnings for missing files)
   citation_url <- paste0("https://raw.githubusercontent.com/", repo, "/main/inst/CITATION")
   citation_alt_url <- paste0("https://raw.githubusercontent.com/", repo, "/master/inst/CITATION")
-  
+
   citation_content <- tryCatch({
     suppressWarnings(readLines(citation_url, warn = FALSE))
   }, error = function(e) {
@@ -563,14 +618,14 @@ get_doi_from_github <- function(repo) {
       suppressWarnings(readLines(citation_alt_url, warn = FALSE))
     }, error = function(e2) NULL)
   })
-  
+
   if (!is.null(citation_content)) {
     # Look for DOI in CITATION file
     doi_patterns <- c(
       "doi\\s*=\\s*[\"']([0-9]+\\.[0-9]+/[^\"'\\s]+)[\"']",
       "DOI\\s*=\\s*[\"']([0-9]+\\.[0-9]+/[^\"'\\s]+)[\"']"
     )
-    
+
     for (pattern in doi_patterns) {
       matches <- regmatches(citation_content, regexec(pattern, citation_content, ignore.case = TRUE))
       for (match in matches) {
@@ -584,7 +639,7 @@ get_doi_from_github <- function(repo) {
       }
     }
   }
-  
+
   NULL
 }
 
@@ -593,7 +648,7 @@ get_doi_from_github <- function(repo) {
 #' @return DOI string or NULL if not found
 get_doi_from_package <- function(pkg) {
   if (!is_installed(pkg)) return(NULL)
-  
+
   # Try to get DOI from citation
   cit <- tryCatch(utils::citation(pkg), error = function(e) NULL)
   if (!is.null(cit)) {
@@ -604,7 +659,7 @@ get_doi_from_package <- function(pkg) {
       }
     }
   }
-  
+
   # Try to get DOI from package description
   desc <- tryCatch(utils::packageDescription(pkg), error = function(e) NULL)
   if (!is.null(desc)) {
@@ -613,7 +668,7 @@ get_doi_from_package <- function(pkg) {
       return(as.character(doi))
     }
   }
-  
+
   NULL
 }
 
@@ -649,10 +704,10 @@ parse_author_text <- function(x) {
   # A crude split; better than nothing for freeform Author fields
   y <- unlist(strsplit(x, "( and |,|;)", perl = TRUE))
   y <- trimws(y)
-  
+
   # Filter out funding authors (those with [fnd] role)
   y <- y[!grepl("\\[fnd\\]", y, ignore.case = TRUE)]
-  
+
   y <- vapply(y, clean_author_name, character(1))
   y <- trimws(y)
   y[nzchar(y)]
@@ -664,7 +719,7 @@ parse_author_text <- function(x) {
 #' @return BibTeX string or NULL if conversion fails
 bibtex_from_bibentry <- function(be, key_hint = NULL) {
   if (is.null(be)) return(NULL)
-  
+
   # toBibtex returns class 'Bibtex'; collapse to string
   bt <- tryCatch(toBibtex(be), error = function(e) NULL)
   if (is.null(bt)) return(NULL)
@@ -692,12 +747,12 @@ try_case_insensitive_search <- function(pkg, database, verbose = FALSE) {
       repos <- c(CRAN = "https://cloud.r-project.org")
     }
     ap <- tryCatch(utils::available.packages(repos = repos), error = function(e) NULL)
-    
+
     if (!is.null(ap) && nrow(ap) > 0) {
       # Find case-insensitive match
       cran_packages <- rownames(ap)
       match_idx <- which(tolower(cran_packages) == tolower(pkg))
-      
+
       if (length(match_idx) > 0) {
         correct_name <- cran_packages[match_idx[1]]
         if (verbose) {
@@ -707,25 +762,25 @@ try_case_insensitive_search <- function(pkg, database, verbose = FALSE) {
       }
     }
   }
-  
+
   if (database == "bioconductor" || database == "auto") {
     # Search Bioconductor case-insensitively
     if (is_installed("BiocManager")) {
       bioc_repos <- tryCatch({
         BiocManager::repositories()
       }, error = function(e) NULL)
-      
+
       if (!is.null(bioc_repos)) {
         bioc_only_repos <- bioc_repos[!names(bioc_repos) %in% c("CRAN", "CRANextra")]
-        
+
         if (length(bioc_only_repos) > 0) {
           ap_bioc <- tryCatch(utils::available.packages(repos = bioc_only_repos), error = function(e) NULL)
-          
+
           if (!is.null(ap_bioc) && nrow(ap_bioc) > 0) {
             # Find case-insensitive match
             bioc_packages <- rownames(ap_bioc)
             match_idx <- which(tolower(bioc_packages) == tolower(pkg))
-            
+
             if (length(match_idx) > 0) {
               correct_name <- bioc_packages[match_idx[1]]
               if (verbose) {
@@ -738,7 +793,7 @@ try_case_insensitive_search <- function(pkg, database, verbose = FALSE) {
       }
     }
   }
-  
+
   return(NULL)
 }
 
@@ -778,7 +833,7 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
     ap <- tryCatch(utils::available.packages(repos = repos), error = function(e) NULL)
     package_found <- !is.null(ap) && nrow(ap) > 0 && pkg %in% rownames(ap)
     package_origin <- if (package_found) "CRAN" else NULL
-    
+
   } else if (database == "bioconductor") {
     # Check only Bioconductor
     if (verbose) {
@@ -786,13 +841,13 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
     }
     package_found <- is_bioc_package(pkg)
     package_origin <- if (package_found) "Bioconductor" else NULL
-    
+
   } else {
     # Auto-detect (default behavior)
     if (verbose) {
       cat("    Auto-detecting package repository...\n")
     }
-    
+
     # Determine origin with exact case first
     if (is_bioc_package(pkg)) {
       package_origin <- "Bioconductor"
@@ -808,7 +863,7 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
       package_origin <- if (package_found) "CRAN" else NULL
     }
   }
-  
+
   # Report package origin in verbose mode
   if (verbose) {
     if (!is.null(package_origin)) {
@@ -817,18 +872,18 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
       cat("    Package not found with exact case. Trying case-insensitive search...\n")
     }
   }
-  
+
   # Error if package not found in specified repository
   if (!package_found) {
     # Try case-insensitive search
     case_insensitive_result <- try_case_insensitive_search(pkg, database, verbose)
-    
+
     if (!is.null(case_insensitive_result)) {
       # Found a match with different case
       package_found <- TRUE
       package_origin <- case_insensitive_result$origin
       pkg <- case_insensitive_result$correct_name  # Update package name to correct case
-      
+
       if (verbose) {
         cat("    Found package with different case:", pkg, "in", package_origin, "\n")
       }
@@ -846,7 +901,7 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
       }
     }
   }
-  
+
   out <- list(
     pkg = pkg,
     title = NULL,
@@ -860,12 +915,12 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
     bibtex = NULL,
     repository = package_origin
   )
-  
+
   # Set URL based on detected origin
   if (package_origin == "Bioconductor") {
     out$url <- paste0("https://bioconductor.org/packages/", pkg)
   }
-  
+
   if (is_installed(pkg)) {
     cit <- tryCatch(utils::citation(pkg), error = function(e) NULL)
     desc <- tryCatch(utils::packageDescription(pkg), error = function(e) NULL)
@@ -908,18 +963,18 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
       doi <- safely_get(be, "doi", default = NULL)
       if (!is.null(doi) && nzchar(doi)) out$doi <- as.character(doi)
     }
-    
+
     # Try to get DOI from package metadata if not found in citation
     if (is.null(out$doi) || !nzchar(out$doi)) {
       out$doi <- get_doi_from_package(pkg)
     }
-    
+
     # Get GitHub information for URL, but use repository DOI
     github_info <- get_github_info(pkg, out$url)
     if (!is.null(github_info$github_url) && nzchar(github_info$github_url)) {
       out$url <- github_info$github_url
     }
-    
+
     # For Bioconductor packages, prioritize repository DOI over citation DOI
     # For CRAN packages, use repository DOI only if no citation DOI found
     if (package_origin == "Bioconductor") {
@@ -936,7 +991,7 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
         }
       }
     }
-    
+
   } else {
     # Not installed: fall back to repository metadata
     if (package_origin == "Bioconductor") {
@@ -944,7 +999,7 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
     } else {
       meta <- cran_meta_for(pkg)
     }
-    
+
     if (!is.null(meta)) {
       meta_title <- safely_get(meta, "Title", default = pkg)
       if (!is.null(meta_title) && nzchar(meta_title)) {
@@ -965,13 +1020,13 @@ collect_for_package_internal <- function(pkg, database = "auto", verbose = FALSE
       au_txt <- safely_get(meta, "Author", default = NULL)
       au <- parse_author_text(au_txt)
       if (length(au) > 0) out$authors <- au
-      
+
       # Get GitHub information for URL, but use repository DOI for uninstalled packages
       github_info <- get_github_info(pkg, out$url)
       if (!is.null(github_info$github_url) && nzchar(github_info$github_url)) {
         out$url <- github_info$github_url
       }
-      
+
       # Use repository DOI instead of GitHub DOI
       if (is.null(out$doi) || !nzchar(out$doi)) {
         repo_doi <- get_repository_doi(pkg, package_origin)
