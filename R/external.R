@@ -16,13 +16,13 @@
 #' @return Invisible list of results with package information and formatted citations. Always writes to file.
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Generate RIS citation for a CRAN package
 #' result <- createRef("ggplot2", filename = tempfile()) # Omit filename
 #'
 #' # Generate citation for a Bioconductor package (requires BiocManager)
 #' if (requireNamespace("BiocManager", quietly = TRUE)) {
-#'   result <- createRef("Biobase")
+#'   result <- createRef("Biobase", filename = tempfile())
 #' }
 #'
 #' # Generate both RIS and BibTeX for multiple packages
@@ -278,7 +278,7 @@ createRis <- function(title, authors, year, url = NULL, version = NULL, doi = NU
 #'   title = "ggplot2: Create Elegant Data Visualisations",
 #'   authors = c("Wickham, Hadley"),
 #'   year = "2016",
-#'   url = "https://ggplot2.tidyverse.org"
+#'   url = "https://ggplot2.tidyverse.org",
 #'   filename = tempfile() # Omit filename
 #' )
 #'
@@ -328,10 +328,10 @@ createBibtex <- function(key, title, authors, year, url = NULL, version = NULL, 
 #' @return Invisible list of results with package information and formatted citations. Always writes to file.
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Generate citation for Bioconductor packages (requires BiocManager)
 #' if (requireNamespace("BiocManager", quietly = TRUE)) {
-#'   result <- createBiocRef("Biobase")
+#'   result <- createBiocRef("Biobase", filename = tempfile())
 #'
 #'   # Generate citations for multiple Bioconductor packages
 #'   bioc_packages <- c("Biobase", "limma", "edgeR")
@@ -344,7 +344,8 @@ createBibtex <- function(key, title, authors, year, url = NULL, version = NULL, 
 #'   createBiocRef("Biobase", verbose = TRUE, filename = tempfile()) # Omit filename = tempfile()
 #'
 #'   # Force search in Bioconductor repository
-#'   createBiocRef("Biobase", database = "bioconductor", verbose = TRUE, filename = tempfile()) # Omit filename = tempfile()
+#'   createBiocRef("Biobase", database = "bioconductor", verbose = TRUE,
+#'   filename = tempfile()) # Omit filename = tempfile()
 #' }
 #' }
 createBiocRef <- function(pkg, format = "ris", filename = NULL, overwrite = TRUE, verbose = FALSE, database = "auto") {

@@ -38,25 +38,25 @@ citations in RIS or BibTeX format. Supports both CRAN and Bioconductor packages
 with automatic DOI retrieval from GitHub repositories and published papers.
 }
 \examples{
-\dontrun{
+\donttest{
 # Generate RIS citation for a CRAN package
-result <- createRef("ggplot2")
+result <- createRef("ggplot2", filename = tempfile()) # Omit filename
 
 # Generate citation for a Bioconductor package (requires BiocManager)
 if (requireNamespace("BiocManager", quietly = TRUE)) {
-  result <- createRef("Biobase")
+  result <- createRef("Biobase", filename = tempfile())
 }
 
 # Generate both RIS and BibTeX for multiple packages
-results <- createRef(c("ggplot2", "dplyr"), format = "both")
+results <- createRef(c("ggplot2", "dplyr"), format = "both", filename = tempfile())
 
 # Write to file (extension will be added automatically)
-createRef("ggplot2", filename = tempfile())
+createRef("ggplot2", filename = tempfile()) # Replace with e.g. "ggplot2_citation"
 
 # Verbose output showing each step (writes to default file)
-createRef("ggplot2", verbose = TRUE)
+createRef("ggplot2", verbose = TRUE, filename = tempfile()) # Omit filename
 
 # Force search in specific repository
-createRef("ggplot2", database = "cran")
+createRef("ggplot2", database = "cran", filename = tempfile()) # Omit filename
 }
 }

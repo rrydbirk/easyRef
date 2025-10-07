@@ -44,7 +44,8 @@ createBibtex(
   title = "ggplot2: Create Elegant Data Visualisations",
   authors = c("Wickham, Hadley"),
   year = "2016",
-  url = "https://ggplot2.tidyverse.org"
+  url = "https://ggplot2.tidyverse.org",
+  filename = tempfile() # Omit filename
 )
 
 # Write to file
@@ -53,6 +54,6 @@ createBibtex(
   title = "ggplot2: Create Elegant Data Visualisations",
   authors = c("Wickham, Hadley"),
   year = "2016",
-  filename = tempfile()
+  filename = tempfile() # Replace with e.g. "ggplot2.bib"
 )
 }

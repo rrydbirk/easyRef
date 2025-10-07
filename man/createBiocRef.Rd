@@ -25,7 +25,7 @@ If no file extension is provided, one will be added based on the format.}
 
 \item{verbose}{Logical. If TRUE, prints detailed information about each step (default: FALSE)}
 
-\item{database}{Repository to search: "auto" (default), "cran", or "bioconductor". 
+\item{database}{Repository to search: "auto" (default), "cran", or "bioconductor".
 For Bioconductor packages, "bioconductor" is recommended.}
 }
 \value{
@@ -36,23 +36,24 @@ Convenience function specifically for Bioconductor packages. Automatically
 detects Bioconductor packages and retrieves metadata from Bioconductor repositories.
 }
 \examples{
-\dontrun{
+\donttest{
 # Generate citation for Bioconductor packages (requires BiocManager)
 if (requireNamespace("BiocManager", quietly = TRUE)) {
-  result <- createBiocRef("Biobase")
-  
+  result <- createBiocRef("Biobase", filename = tempfile())
+
   # Generate citations for multiple Bioconductor packages
   bioc_packages <- c("Biobase", "limma", "edgeR")
-  results <- createBiocRef(bioc_packages, format = "both")
-  
+  results <- createBiocRef(bioc_packages, format = "both", filename = tempfile()) # Omit filename
+
   # Write Bioconductor package citations to file (extension added automatically)
-  createBiocRef("Biobase", filename = tempfile())
-  
+  createBiocRef("Biobase", filename = tempfile()) # Replace with e.g. "biobase_citation"
+
   # Verbose output for Bioconductor packages (writes to default file)
-  createBiocRef("Biobase", verbose = TRUE)
-  
+  createBiocRef("Biobase", verbose = TRUE, filename = tempfile()) # Omit filename = tempfile()
+
   # Force search in Bioconductor repository
-  createBiocRef("Biobase", database = "bioconductor", verbose = TRUE)
+  createBiocRef("Biobase", database = "bioconductor", verbose = TRUE,
+  filename = tempfile()) # Omit filename = tempfile()
 }
 }
 }
